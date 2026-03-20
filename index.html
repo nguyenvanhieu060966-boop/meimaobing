@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《没猫饼》探案局入职测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        /* 基础重置与字体设置 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; font-family: 'Kaiti', 'STKaiti', serif; overflow: hidden; background-color: #f8b500; }
+        
+        /* 全屏背景 */
+        .game-screen { position: relative; width: 100%; height: 100%; background-image: url('bg1.jpg'); background-size: cover; background-position: center; transition: background-image 0.5s ease; }
+
+        /* 顶部 UI */
+        .top-ui { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; color: #fff; font-size: 18px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); pointer-events: none; z-index: 100;}
+        .top-ui-right { display: flex; gap: 20px; }
+        .ui-btn { cursor: pointer; pointer-events: auto; transition: opacity 0.2s; }
+        .ui-btn:hover { opacity: 0.8; }
+
+        /* 对话框容器 */
+        .dialog-container { position: absolute; bottom: 8%; left: 10%; right: 10%; max-width: 1000px; margin: 0 auto; display: flex; align-items: flex-end; z-index: 50;}
+        
+        /* 左侧头像框 */
+        .avatar-box { position: absolute; left: -40px; bottom: 40px; width: 130px; height: 130px; border-radius: 50%; border: 4px solid #8B6B55; background-color: #fff; overflow: hidden; z-index: 10; box-shadow: 2px 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 40px;}
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+
+        /* 主对话框 */
+        .dialog-box { width: 100%; background-color: rgba(255, 255, 255, 0.95); border: 4px solid #8B6B55; border-radius: 20px; padding: 30px 40px 30px 110px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-height: 250px;}
+        
+        /* 角色名字/章节标题 - 增加了 cursor: pointer 以便触发彩蛋 */
+        .character-name { font-size: 20px; color: #A07A60; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; cursor: pointer; display: inline-block;}
+        .divider { height: 2px; background-color: #8B6B55; margin-bottom: 15px; width: 100%; }
+        
+        /* 题目/文案正文 */
+        .dialog-text { font-size: 18px; color: #333; line-height: 1.8; letter-spacing: 1px; margin-bottom: 20px;}
+        .dialog-text strong { color: #8B6B55; font-size: 22px; display: block; margin-bottom: 10px; }
+        .merch-recommendation { margin-top: 15px; color: #d16b47; font-weight: bold; }
+        
+        /* 选项按钮区 */
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn { background-color: #fdf5e6; border: 2px dashed #A07A60; color: #555; padding: 12px 20px; border-radius: 10px; font-size: 17px; font-family: inherit; cursor: pointer; transition: all 0.2s; text-align: left; line-height: 1.5;}
+        .option-btn:hover { background-color: #8B6B55; color: #fff; border-style: solid;}
+
+        /* 结果页专属样式 */
+        .action-buttons { margin-top: 20px; display: flex; justify-content: flex-end; gap: 15px; display: none; }
+        .action-btn { background-color: transparent; border: 2px solid #8B6B55; color: #8B6B55; padding: 8px 20px; border-radius: 20px; font-size: 16px; font-family: inherit; cursor: pointer; transition: all 0.2s; }
+        .action-btn:hover { background-color: #8B6B55; color: #fff; }
+        .next-arrow { position: absolute; bottom: 15px; right: 25px; font-size: 20px; color: #8B6B55; animation: bounce 1s infinite alternate; pointer-events: none;}
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(5px); } }
+        .hidden { display: none !important; }
+
+        /* 海报模版专属样式 */
+        .poster-container-wrapper { opacity: 0; pointer-events: none; position: absolute; top: -9999px; width: 720px; height: 1280px; z-index: -1; }
+        /* 修复灰色背景：增加 background-color: #f8b500 底色兜底 */
+        .poster-template { width: 100%; height: 100%; background-color: #f8b500; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; padding: 60px; position: relative; }
+        .poster-header { width: 100%; text-align: center; color: #fff; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-bottom: 40px; }
+        .poster-header h1 { font-size: 50px; }
+        .poster-header p { font-size: 26px; }
+        .poster-avatar-box { width: 300px; height: 300px; border-radius: 50%; border: 10px solid #8B6B55; background-color: #fff; overflow: hidden; margin-bottom: 40px; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); }
+        .poster-avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        .poster-dialog-box { width: 100%; background-color: rgba(255, 255, 255, 0.95); border: 6px solid #8B6B55; border-radius: 30px; padding: 40px; display: flex; flex-direction: column; }
+        .poster-character-name { font-size: 30px; color: #A07A60; font-weight: bold; margin-bottom: 10px; }
+        .poster-divider { height: 4px; background-color: #8B6B55; margin-bottom: 25px; }
+        .poster-text { font-size: 24px; color: #333; line-height: 1.8; }
+        .poster-text strong { color: #8B6B55; font-size: 36px; display: block; margin-bottom: 15px; }
+        .poster-merch { margin-top: 25px; color: #d16b47; font-weight: bold; font-size: 26px;}
+        .poster-footer { position: absolute; bottom: 40px; color: #fff; font-size: 20px; text-align: center; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+
+        /* ================= 👑 新增：管理员后台看板样式 ================= */
+        .admin-dashboard {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.98); z-index: 9999;
+            padding: 40px; overflow-y: auto; font-family: sans-serif;
+            display: none; /* 默认隐藏 */
+            flex-direction: column; align-items: center;
+        }
+        .admin-dashboard h2 { color: #8B6B55; margin-bottom: 20px; font-size: 28px; border-bottom: 2px solid #8B6B55; padding-bottom: 10px;}
+        .stats-summary { display: flex; gap: 30px; margin-bottom: 30px; font-size: 18px; color: #333;}
+        .stats-box { background: #fdf5e6; border: 2px solid #8B6B55; padding: 20px; border-radius: 15px; text-align: center; min-width: 150px;}
+        .stats-box span { display: block; font-size: 36px; font-weight: bold; color: #d16b47; margin-top: 10px;}
+        .stats-list { width: 100%; max-width: 600px; border-collapse: collapse; margin-bottom: 30px;}
+        .stats-list th, .stats-list td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        .stats-list th { background-color: #8B6B55; color: white; }
+        .admin-btns { display: flex; gap: 20px; }
+        .admin-btn { padding: 10px 20px; background: #8B6B55; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;}
+        .admin-btn.danger { background: #c0392b; }
+        .close-admin { position: absolute; top: 20px; right: 30px; font-size: 30px; cursor: pointer; color: #8B6B55;}
+    </style>
+</head>
+<body>
+
+<div class="game-screen" id="sceneBg">
+    <div class="top-ui">
+        <div class="ui-btn" onclick="location.reload()">⟲ 重新开始</div>
+        <div class="top-ui-right">
+            <div class="ui-btn" id="progressText">进度：1/6</div>
+        </div>
+    </div>
+
+    <div class="dialog-container">
+        <div class="avatar-box">
+            <span id="defaultAvatar">🐾</span>
+            <img id="catAvatar" src="" alt="测试结果头像">
+        </div>
+        
+        <div class="dialog-box">
+            <div class="character-name" id="uiTitle"><span id="triggerAdmin">没猫饼探案局 · 入职考核</span></div>
+            <div class="divider"></div>
+            
+            <div class="dialog-text" id="dialogText">这里显示题目内容...</div>
+            <div class="options-container" id="optionsContainer"></div>
+
+            <div class="action-buttons" id="actionContainer">
+                <button class="action-btn" onclick="generatePoster()">下载专属档案海报</button>
+            </div>
+            
+            <div class="next-arrow" id="nextArrow">▽</div>
+        </div>
+    </div>
+</div>
+
+<div class="poster-container-wrapper" id="posterCanvasWrapper">
+    <div class="poster-template" id="posterBg">
+        <div class="poster-header"><h1>探员档案</h1><p>《没猫饼》探案局内部文件</p></div>
+        <div class="poster-avatar-box"><img id="posterAvatar" src="" alt="海报头像"></div>
+        <div class="poster-dialog-box">
+            <div class="poster-character-name" id="posterMBTI">鉴定报告</div>
+            <div class="poster-divider"></div>
+            <div class="poster-text">
+                <strong id="posterCatName">猫咪名称</strong>
+                <span id="posterCatDesc">性格描述...</span>
+                <div class="poster-merch" id="posterCatMerch">专属推荐...</div>
+            </div>
+        </div>
+        <div class="poster-footer">此文件已存档。长按保存图片。</div>
+    </div>
+</div>
+
+<div class="admin-dashboard" id="adminDashboard">
+    <div class="close-admin" onclick="closeAdmin()">✖</div>
+    <h2>📊 探案局内部数据监控台</h2>
+    
+    <div class="stats-summary">
+        <div class="stats-box">总测试人数<span id="totalPlays">0</span></div>
+        <div class="stats-box">最热门猫咪<span id="topCat">-</span></div>
+    </div>
+
+    <table class="stats-list" id="statsTable">
+        <thead><tr><th>MBTI 类型</th><th>对应猫咪品种</th><th>出现次数</th><th>占比</th></tr></thead>
+        <tbody>
+            </tbody>
+    </table>
+
+    <div class="admin-btns">
+        <button class="admin-btn" onclick="exportCSV()">📥 导出数据为 CSV (Excel可用)</button>
+        <button class="admin-btn danger" onclick="clearData()">🗑️ 清空所有数据</button>
+    </div>
+</div>
+
+<script>
+    // --- 题库配置 (保持不变) ---
+    const questions = [
+        { text: "深夜，“没猫饼”宠物用品店警铃大作，限量版的“特级猫薄荷球”不翼而飞。你赶到现场时，围满了一群流浪猫。第一步你打算？", options: [{ text: "冲进猫群，挨个套近乎八卦。", trait: "E" }, { text: "避开猫群，跳上高处俯视寻找异常。", trait: "I" }] },
+        { text: "进入一片狼藉的店内，面对混乱的现场，你最先注意到的是什么？", options: [{ text: "地板上陌生的毛发和模糊的梅花爪印。", trait: "S" }, { text: "窃贼只偷不值钱的薄荷没碰纯肉罐头，这背后动机不简单！", trait: "N" }] },
+        { text: "你抓住了小偷——一只饿得皮包骨头的小流浪猫。它哭着说偷东西是为了换猫粮喂弟弟妹妹。此时你会怎么结案？", options: [{ text: "规矩就是规矩，立刻逮捕并追回失物。", trait: "T" }, { text: "心软了，自掏腰包平息店长怒火，并帮它找份合法工作。", trait: "F" }] },
+        { text: "案子圆满解决，探长要求你提交结案报告并整理商品。你的状态是？", options: [{ text: "拿出专属手账详细写好前因后果，商品按颜色整齐摆回。", trait: "J" }, { text: "在小票背面随手画个思维导图交差。商品大概塞回原位就行。", trait: "P" }] },
+        { text: "店长进了一批“探长同款”文创周边和零食，交给你负责橱窗陈列。你会怎么布置？", options: [{ text: "按“实用性”排布。刚需放黄金位置，文创放结账区做附加销售。", trait: "S" }, { text: "按“故事感”排布。搭一个沉浸式的“猫咪案发现场”微缩景观，主打拍照！", trait: "N" }] },
+        { text: "难得的周末。作为优秀的喵星探员，你会如何度过？", options: [{ text: "提前规划完美日程：上午盘点库存，下午巡视领地，一切尽在掌握。", trait: "J" }, { text: "走到哪算哪。也许在阳光下翻肚皮打盹，也许临时起意跑出半条街。", trait: "P" }] }
+    ];
+
+    // --- 16 种 MBTI 结果配置区 (已更新为你的最新文件名) ---
+    const catData = {
+        "INTP": { bg: "bg4.jpg", avatar: "INTP巴黎猫.png", name: "高冷智囊：巴厘猫", desc: "眼神迷离但充满智慧，你喜欢躲在暗处观察。靠着严密的逻辑，就能在脑海中还原作案手法。", merch: "🎒 专属推荐：高智商漏食玩具、案件线索手账本。" },
+        "INTJ": { bg: "bg4.jpg", avatar: "INTJ暹罗猫.png", name: "幕后黑手：暹罗猫", desc: "绝对的理性主义者，总能一眼看穿迷局的本质。在你眼里，所有的案件不过是解方程罢了。", merch: "🎒 专属推荐：极简风全自动猫砂盆、高级定制项圈。" },
+        "ENTP": { bg: "bg4.jpg", avatar: "ENTP康沃尔卷毛猫.png", name: "鬼马发明家：卷毛猫", desc: "不按常理出牌的脑洞大师！你总能用最奇葩的方式破案，顺便把局里的设备改装个遍。", merch: "🎒 专属推荐：不规则猫抓板、奇趣电动老鼠。" },
+        "ENTJ": { bg: "bg4.jpg", avatar: "ENTJ东方短毛猫.png", name: "铁血长官：黑猫", desc: "天生的领导者，掌控全局。你一发话，整个探案局的猫咪都得立正站好！", merch: "🎒 专属推荐：真皮战术背心、威严探长帽。" },
+        "ESFP": { bg: "bg2.jpg", avatar: "大头照2.jpg", name: "社牛线人：大橘猫", desc: "为了一个罐头就能和流浪狗称兄道弟！你总能在最市井的地方打探到关键情报。", merch: "🎒 专属推荐：盲盒罐头套组、超大号猫薄荷抱枕。" },
+        "ESTP": { bg: "bg2.jpg", avatar: "ESTP孟加拉豹猫.png", name: "极速刺客：豹猫", desc: "行动大于思考，享受追逐战的刺激。嫌疑人跑得再快，也快不过你的闪电突击。", merch: "🎒 专属推荐：防爆冲运动牵引绳、能量补充猫条。" },
+        "ISFP": { bg: "bg2.jpg", avatar: "ISFP无毛猫.png", name: "灵魂画手：无毛猫", desc: "拥有极其敏锐的艺术嗅觉，你不仅能侦破案件，还能完美画出嫌疑人的精美画像。", merch: "🎒 专属推荐：高颜值复古猫窝、定制水彩周边。" },
+        "ISTP": { bg: "bg2.jpg", avatar: "ISTP狸花猫.png", name: "机械大师：狸花猫", desc: "实用主义至上，擅长利用现场的任何废品制作破案工具，没有你撬不开的锁。", merch: "🎒 专属推荐：多功能逗猫棒、结实耐咬玩具。" },
+        "ESTJ": { bg: "bg1.jpg", avatar: "大头照1jpg.jpg", name: "铁面探长：警长猫", desc: "雷厉风行！你相信证据，执行力爆表。档案永远整理得井井有条，没人能逃过你的追捕。", merch: "🎒 专属推荐：探长同款领带、智能定时喂食器。" },
+        "ESFJ": { bg: "bg1.jpg", avatar: "ESFJ布偶猫.png", name: "热心大妈：布偶猫", desc: "探案局的后勤保障！你关心每一位同事的心理健康，破案之余还不忘帮邻居找走失的小狗。", merch: "🎒 专属推荐：舒适恒温猫窝、治愈系猫咪香氛。" },
+        "ISTJ": { bg: "bg1.jpg", avatar: "ISTJ俄罗斯蓝猫.png", name: "卷王之王：俄罗斯蓝猫", desc: "沉默寡言，恪尽职守。只要交接给你的案件，哪怕查阅十年前的监控录像你也会一查到底。", merch: "🎒 专属推荐：静音饮水机、经典款抓板。" },
+        "ISFJ": { bg: "bg1.jpg", avatar: "大头照3.jpg", name: "温柔后盾：三花猫", desc: "心思细腻，总能发现别人忽略的盲点。虽然不爱出风头，但你是团队最坚实的后盾。", merch: "🎒 专属推荐：高颜值蝴蝶结配饰、柔软猫毯。" },
+        "ENFP": { bg: "bg3.jpg", avatar: "ENFP德文卷毛猫.png", name: "快乐小狗：德文猫", desc: "披着猫皮的小狗！精力旺盛，脑子里装满奇思妙想，经常在破案中带来意外惊喜。", merch: "🎒 专属推荐：飞盘玩具、互动式漏食球。" },
+        "ENFJ": { bg: "bg3.jpg", avatar: "ENFJ缅因猫.png", name: "正道之光：缅因猫", desc: "自带圣光，极具号召力。你善于感化罪犯，让他们哭着痛改前非主动自首。", merch: "🎒 专属推荐：大型豪华猫爬架、气场披风。" },
+        "INFP": { bg: "bg3.jpg", avatar: "INFP伯曼猫.png", name: "emo诗人：伯曼猫", desc: "极度共情，甚至容易代入嫌疑人的悲惨身世。你在角落思考猫生的样子，总是让人心生怜爱。", merch: "🎒 专属推荐：减压猫薄荷球、私密猫隧道。" },
+        "INFJ": { bg: "bg3.jpg", avatar: "INFJ玄猫.png", name: "神秘先知：玄猫", desc: "直觉准得可怕！往往证据还没找齐，你就已经闭着眼睛猜出了真凶是谁。", merch: "🎒 专属推荐：神秘塔罗牌周边、水晶挂坠项圈。" }
+    };
+
+    // --- 运行逻辑 ---
+    let currentQuestionIndex = 0;
+    let userTraits = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+    let finalMBTI = ""; 
+
+    const uiTitle = document.getElementById("uiTitle");
+    const dialogText = document.getElementById("dialogText");
+    const optionsContainer = document.getElementById("optionsContainer");
+    const progressText = document.getElementById("progressText");
+    const actionContainer = document.getElementById("actionContainer");
+    const defaultAvatar = document.getElementById("defaultAvatar");
+    const catAvatar = document.getElementById("catAvatar");
+    const nextArrow = document.getElementById("nextArrow");
+
+    // 海报元素
+    const posterCanvasWrapper = document.getElementById("posterCanvasWrapper");
+    const posterBg = document.getElementById("posterBg");
+    const posterAvatar = document.getElementById("posterAvatar");
+    const posterMBTI = document.getElementById("posterMBTI");
+    const posterCatName = document.getElementById("posterCatName");
+    const posterCatDesc = document.getElementById("posterCatDesc");
+    const posterCatMerch = document.getElementById("posterCatMerch");
+
+    function renderQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById("triggerAdmin").innerText = `案件现场调查 (${currentQuestionIndex + 1}/6)`;
+        dialogText.innerHTML = q.text;
+        progressText.innerText = `进度：${currentQuestionIndex + 1}/6`;
+        optionsContainer.innerHTML = "";
+        q.options.forEach(option => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerText = option.text;
+            btn.onclick = () => selectOption(option.trait);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(trait) {
+        userTraits[trait]++; 
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) { renderQuestion(); } 
+        else { calculateMBTI(); }
+    }
+
+    function calculateMBTI() {
+        finalMBTI = ""; 
+        finalMBTI += (userTraits.E > userTraits.I) ? "E" : "I";
+        finalMBTI += (userTraits.S >= userTraits.N) ? "S" : "N"; 
+        finalMBTI += (userTraits.T > userTraits.F) ? "T" : "F";
+        finalMBTI += (userTraits.J >= userTraits.P) ? "J" : "P"; 
+        showResult(finalMBTI);
+    }
+
+    function showResult(mbti) {
+        optionsContainer.classList.add("hidden");
+        defaultAvatar.style.display = "none";
+        catAvatar.style.display = "block";
+        actionContainer.style.display = "flex";
+        nextArrow.classList.add("hidden");
+
+        const resultData = catData[mbti] || catData["INTP"]; 
+        document.getElementById("sceneBg").style.backgroundImage = `url('${resultData.bg}')`;
+        catAvatar.src = resultData.avatar;
+        document.getElementById("triggerAdmin").innerText = `鉴定报告 / ${mbti}`;
+        
+        dialogText.innerHTML = `<strong>${resultData.name}</strong>${resultData.desc}<div class="merch-recommendation">${resultData.merch}</div>`;
+        progressText.innerText = "考核完成！";
+
+        posterBg.style.backgroundImage = `url('${resultData.bg}')`;
+        posterAvatar.src = resultData.avatar;
+        posterMBTI.innerText = `鉴定报告 / ${mbti}`;
+        posterCatName.innerText = resultData.name;
+        posterCatDesc.innerText = resultData.desc;
+        posterCatMerch.innerText = resultData.merch;
+
+        // 👑 在这里将结果静默保存到本地缓存
+        saveDataToLocal(mbti, resultData.name);
+    }
+
+    // 绘制海报
+    function generatePoster() {
+        const btn = document.querySelector('#actionContainer .action-btn');
+        const oldText = btn.innerText;
+        btn.innerText = "海报制作中...";
+        btn.disabled = true; 
+        posterCanvasWrapper.style.opacity = "0.01";
+        posterCanvasWrapper.style.top = "0px";
+
+        html2canvas(posterCanvasWrapper, { scale: 2, useCORS: true, backgroundColor: null, logging: false }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = imgData;
+            downloadLink.download = `没猫饼探案档案_${finalMBTI}.png`; 
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink); 
+            
+            btn.innerText = oldText;
+            btn.disabled = false;
+            posterCanvasWrapper.style.opacity = "0";
+            posterCanvasWrapper.style.top = "-9999px";
+        }).catch(err => {
+            console.error('海报生成失败:', err);
+            alert('海报生成失败，请确认是否所有图片均和网页放在同一个文件夹内。');
+            btn.innerText = oldText;
+            btn.disabled = false;
+            posterCanvasWrapper.style.opacity = "0";
+            posterCanvasWrapper.style.top = "-9999px";
+        });
+    }
+
+    /* ================= 👑 新增：数据统计核心逻辑 ================= */
+// 替换为你刚刚在 Laf 复制的云函数 API 地址！
+const CLOUD_API_URL = "https://vwebx9ob1w.sealosbja.site/saveData";
+
+function saveDataToLocal(mbti, catName) {
+    // 1. 发送数据到 Laf 云端数据库
+    fetch(CLOUD_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            "mbti": mbti,
+            "cat": catName
+        })
+    }).then(response => {
+        console.log("数据已成功发送至云端！");
+    }).catch(error => {
+        console.error("发送云端失败:", error);
+    });
+
+    // 2. 依然保留一份在本地，保证你的“连续点击 5 次标题”调出本地后台的功能依然可用
+    let records = JSON.parse(localStorage.getItem('MeiMaoBingData') || '[]');
+    records.push({ time: new Date().toLocaleString('zh-CN'), mbti: mbti, cat: catName });
+    localStorage.setItem('MeiMaoBingData', JSON.stringify(records));
+}
+    // 3. 渲染后台数据面板
+    function openAdmin() {
+        document.getElementById('adminDashboard').style.display = 'flex';
+        let records = JSON.parse(localStorage.getItem('MeiMaoBingData') || '[]');
+        
+        document.getElementById('totalPlays').innerText = records.length;
+        
+        // 统计各个MBTI数量
+        let counts = {};
+        records.forEach(r => {
+            counts[r.mbti] = (counts[r.mbti] || 0) + 1;
+        });
+
+        // 找出最热门的
+        let topMbti = "-";
+        let maxCount = 0;
+        for (let mbti in counts) {
+            if(counts[mbti] > maxCount) { maxCount = counts[mbti]; topMbti = mbti; }
+        }
+        document.getElementById('topCat').innerText = topMbti !== "-" ? (catData[topMbti]?.name.split('：')[1] || topMbti) : "-";
+
+        // 填充表格
+        const tbody = document.querySelector('#statsTable tbody');
+        tbody.innerHTML = '';
+        
+        // 按照 16 种性格遍历显示
+        for(let mbti in catData) {
+            let count = counts[mbti] || 0;
+            let percent = records.length === 0 ? 0 : Math.round((count / records.length) * 100);
+            
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${mbti}</b></td>
+                <td>${catData[mbti].name}</td>
+                <td>${count}</td>
+                <td>${percent}%</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+
+    function closeAdmin() { document.getElementById('adminDashboard').style.display = 'none'; }
+
+    // 4. 清空数据
+    function clearData() {
+        if(confirm("警告：确定要清空所有收集到的测试数据吗？清空后无法恢复！")) {
+            localStorage.removeItem('MeiMaoBingData');
+            openAdmin(); // 重新渲染面板
+            alert("数据已清空！");
+        }
+    }
+
+    // 5. 导出为 CSV (供 Excel 分析)
+    function exportCSV() {
+        let records = JSON.parse(localStorage.getItem('MeiMaoBingData') || '[]');
+        if(records.length === 0) { alert("目前还没有人进行测试哦！"); return; }
+
+        // 加入 BOM 头，防止 Excel 打开中文乱码
+        let csvContent = "\uFEFF"; 
+        csvContent += "测试时间,MBTI类型,对应猫咪\n";
+
+        records.forEach(function(rowArray) {
+            let row = `${rowArray.time},${rowArray.mbti},${rowArray.cat}`;
+            csvContent += row + "\r\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "没猫饼探案局_路演测试数据.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // 初始化第一题
+    window.onload = function() { renderQuestion(); };
+
+</script>
+</body>
+</html>
